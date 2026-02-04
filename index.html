@@ -10,99 +10,79 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
-  :root{
-    --blue:#0D4FA3;
-    --beige:#F4E5C7;
 
-    /* 👇 ako gumbi nisu točno na plavom dijelu, tweakaj ova 2 broja */
-    --btn-bottom: 6.5%;     /* koliko su gumbi podignuti od dna slike */
-    --btn-scale: 1;         /* 1 = normalno, 0.95 malo manje, 1.05 malo veće */
-  }
+:root{
+  --blue:#0D4FA3;
+  --beige:#F4E5C7;
+}
 
-  body{
-    margin:0;
-    min-height:100vh;
-    background: var(--blue);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-family:"Space Mono", monospace;
-    overflow:hidden;
-    padding: 24px;
-    box-sizing:border-box;
-  }
+body{
+  margin:0;
+  min-height:100vh;
+  background:var(--blue);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+  font-family:"Space Mono", monospace;
+}
 
-  /* Poster wrapper */
-  .poster{
-    position: relative;
-    width: min(92vw, 820px);
-    height: auto;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
+/* CENTRIRAN POSTER */
+.wrapper{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:16px;
+}
 
-  /* Slika kao poster */
-  .poster img{
-    width: 100%;
-    height: auto;
-    display:block;
-    border-radius: 18px;
-    box-shadow: 0 18px 45px rgba(0,0,0,0.35); /* blagi shadow */
-  }
+/* SLIKA */
+.invite-image{
+  max-height:75vh;   /* 👈 cijela slika uvijek stane */
+  max-width:90vw;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  border-radius:16px;
+  box-shadow:0 15px 35px rgba(0,0,0,0.3);
+}
 
-  /* Overlay zona za gumbe unutar slike */
-  .overlay{
-    position:absolute;
-    left:0;
-    right:0;
-    bottom: var(--btn-bottom);
-    display:flex;
-    justify-content:center;
-    gap: 14px;
-    flex-wrap:wrap;
-    pointer-events:none; /* da samo gumbi hvataju klik */
-    transform: scale(var(--btn-scale));
-  }
+/* GUMBI ISPOD */
+.footer{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
 
-  .overlay button{
-    pointer-events:auto;
+button{
+  padding:14px 22px;
+  font-size:16px;
+  cursor:pointer;
+  border:2px solid var(--blue);
+  border-radius:12px;
+  font-weight:bold;
+  background:var(--beige);
+  color:var(--blue);
+  font-family:"Comic Sans MS","Comic Sans",cursive;
+  white-space:nowrap;
+}
 
-    padding: 14px 22px;
-    font-size: 16px;
-    cursor: pointer;
+/* NO kad bježi */
+.crazy-no{
+  position:fixed !important;
+  z-index:9999;
+}
 
-    border: 2px solid var(--blue);
-    border-radius: 12px;
-    font-weight: 700;
+/* konfeti */
+#confettiCanvas{
+  position:fixed;
+  pointer-events:none;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+}
 
-    background: var(--beige);
-    color: var(--blue);
-
-    font-family: "Comic Sans MS","Comic Sans",cursive;
-    white-space: nowrap;
-
-    box-shadow: 0 6px 14px rgba(0,0,0,0.18); /* da se vidi na slici */
-    transition: transform 120ms ease;
-  }
-
-  .overlay button:active{
-    transform: scale(0.98);
-  }
-
-  /* NO kad poludi */
-  .crazy-no{
-    position: fixed !important;
-    z-index: 9999;
-  }
-
-  /* konfeti */
-  #confettiCanvas{
-    position:fixed;
-    pointer-events:none;
-    top:0; left:0;
-    width:100%; height:100%;
-  }
 </style>
 </head>
 
@@ -110,114 +90,147 @@
 
 <canvas id="confettiCanvas"></canvas>
 
-<div class="poster">
-  <img src="partiii.png" alt="pozivnica">
-  <div class="overlay">
-    <button id="yesBtn">Top, vidimo se, dolazim</button>
-    <button id="noBtn">E, sorry, nemrem</button>
-  </div>
+<div class="wrapper">
+
+<img src="partiii.png" class="invite-image">
+
+<div class="footer">
+<button id="yesBtn">Top, vidimo se, dolazim</button>
+<button id="noBtn">E, sorry, nemrem</button>
+</div>
+
 </div>
 
 <script>
-  const yesBtn = document.getElementById('yesBtn');
-  const noBtn  = document.getElementById('noBtn');
 
-  const messages = [
-    "e, sori, nemrem",
-    "znaš da želiš doći",
-    "ne, fakat razmisli",
-    "ekipa računa na tebe",
-    "daj se uozbilji",
-    "ajde"
-  ];
+const yesBtn = document.getElementById('yesBtn');
+const noBtn = document.getElementById('noBtn');
 
-  let index = 0;
-  let speed = 260;
-  let crazy = false;
-  let cooldown = false;
+const messages = [
+"e, sori, nemrem",
+"znaš da želiš doći",
+"ne, fakat razmisli",
+"ekipa računa na tebe",
+"daj se uozbilji",
+"ajde"
+];
 
-  function clamp(n,min,max){ return Math.max(min,Math.min(max,n)); }
+let index = 0;
+let speed = 260;
+let crazy = false;
+let cooldown = false;
 
-  function randomPos(btn){
-    const w = btn.offsetWidth;
-    const h = btn.offsetHeight;
-    const margin = 10;
-    return {
-      x: Math.random() * (window.innerWidth - w - margin),
-      y: Math.random() * (window.innerHeight - h - margin)
-    };
+function clamp(n,min,max){
+  return Math.max(min,Math.min(max,n));
+}
+
+function randomPos(btn){
+  const w = btn.offsetWidth;
+  const h = btn.offsetHeight;
+
+  return {
+    x: Math.random()*(window.innerWidth-w),
+    y: Math.random()*(window.innerHeight-h)
+  };
+}
+
+function moveNo(){
+
+  if(cooldown) return;
+  cooldown = true;
+
+  if(!crazy){
+    crazy = true;
+    noBtn.classList.add('crazy-no');
   }
 
-  function moveNo(){
-    if(cooldown) return;
-    cooldown = true;
+  index = (index + 1) % messages.length;
+  noBtn.textContent = messages[index];
 
-    if(!crazy){
-      crazy = true;
-      noBtn.classList.add('crazy-no');
+  const {x,y} = randomPos(noBtn);
+
+  noBtn.style.left = x + 'px';
+  noBtn.style.top  = y + 'px';
+
+  const rot = Math.random()*28 - 14;
+  const scale = 1 + Math.random()*0.2;
+
+  noBtn.style.transform = `rotate(${rot}deg) scale(${scale})`;
+
+  speed = clamp(speed - 18,70,260);
+
+  setTimeout(()=> cooldown=false, speed);
+}
+
+noBtn.addEventListener('mouseenter',moveNo);
+noBtn.addEventListener('mouseover',moveNo);
+
+noBtn.addEventListener('touchstart',(e)=>{
+  e.preventDefault();
+  moveNo();
+},{passive:false});
+
+noBtn.addEventListener('click',(e)=>{
+  e.preventDefault();
+  moveNo();
+});
+
+/* KONFETI */
+
+const canvas = document.getElementById('confettiCanvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+window.addEventListener('resize',()=>{
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+let confetti = [];
+
+function createConfetti(){
+
+  confetti = [];
+
+  for(let i=0;i<150;i++){
+    confetti.push({
+      x: Math.random()*canvas.width,
+      y: Math.random()*canvas.height - canvas.height,
+      r: Math.random()*6 + 4,
+      d: Math.random()*150,
+      color: ["#F4E5C7","#0D4FA3","#FFD700","#FF6B6B","#4CAF50"][Math.floor(Math.random()*5)]
+    });
+  }
+
+  animateConfetti();
+}
+
+function animateConfetti(){
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  confetti.forEach((c,i)=>{
+
+    ctx.fillStyle = c.color;
+    ctx.fillRect(c.x,c.y,c.r,c.r);
+
+    c.y += Math.cos(c.d) + 2;
+    c.x += Math.sin(c.d);
+
+    if(c.y > canvas.height){
+      confetti.splice(i,1);
     }
+  });
 
-    index = (index + 1) % messages.length;
-    noBtn.textContent = messages[index];
-
-    const {x,y} = randomPos(noBtn);
-    noBtn.style.left = x + 'px';
-    noBtn.style.top  = y + 'px';
-
-    const rot = Math.random()*28 - 14;
-    const scale = 1 + Math.random()*0.2;
-    noBtn.style.transform = `rotate(${rot}deg) scale(${scale})`;
-
-    speed = clamp(speed - 18, 70, 260);
-    setTimeout(()=> cooldown = false, speed);
+  if(confetti.length>0){
+    requestAnimationFrame(animateConfetti);
   }
+}
 
-  noBtn.addEventListener('mouseenter', moveNo);
-  noBtn.addEventListener('mouseover', moveNo);
-  noBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); moveNo(); }, {passive:false});
-  noBtn.addEventListener('click', (e)=>{ e.preventDefault(); moveNo(); });
+yesBtn.addEventListener('click',createConfetti);
 
-  /* KONFETI */
-  const canvas = document.getElementById('confettiCanvas');
-  const ctx = canvas.getContext('2d');
-
-  function resizeCanvas(){
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-
-  let confetti = [];
-
-  function createConfetti(){
-    confetti = [];
-    for(let i=0;i<160;i++){
-      confetti.push({
-        x: Math.random()*canvas.width,
-        y: Math.random()*canvas.height - canvas.height,
-        r: Math.random()*6 + 4,
-        d: Math.random()*150,
-        color: ["#F4E5C7","#0D4FA3","#FFD700","#FF6B6B","#4CAF50"][Math.floor(Math.random()*5)]
-      });
-    }
-    animateConfetti();
-  }
-
-  function animateConfetti(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    for (let i = confetti.length - 1; i >= 0; i--){
-      const c = confetti[i];
-      ctx.fillStyle = c.color;
-      ctx.fillRect(c.x, c.y, c.r, c.r);
-      c.y += Math.cos(c.d) + 2;
-      c.x += Math.sin(c.d);
-      if (c.y > canvas.height) confetti.splice(i, 1);
-    }
-    if (confetti.length > 0) requestAnimationFrame(animateConfetti);
-  }
-
-  yesBtn.addEventListener('click', createConfetti);
 </script>
 
 </body>
