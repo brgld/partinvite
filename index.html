@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pozivnica</title>
+
+<!-- Space Mono -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+
+:root{
+  --blue:#0D4FA3;
+  --beige:#F4E5C7;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  background: var(--blue);
+  display:flex;
+  justify-content:center;
+  padding:20px;
+  font-family:"Space Mono", monospace;
+}
+
+.page{
+  width:min(820px, 100%);
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
+.card{
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 10px 25px rgba(0,0,0,0.25);
+}
+
+.invite-image{
+  width:100%;
+  display:block;
+}
+
+/* PLAVI DIO ISPOD SLIKE */
+.footer{
+  background:var(--blue);
+  border-radius:16px;
+  padding:18px;
+  display:flex;
+  justify-content:center;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+/* GUMBI */
+button{
+  padding:14px 22px;
+  font-size:16px;
+  cursor:pointer;
+
+  border:2px solid var(--blue);
+  border-radius:12px;
+
+  font-weight:bold;
+
+  background:var(--beige);
+  color:var(--blue);
+
+  font-family:"Comic Sans MS","Comic Sans",cursive;
+
+  transition:transform 120ms ease;
+  white-space:nowrap;
+}
+
+/* NO gumb kad poludi */
+.crazy-no{
+  position:fixed !important;
+  z-index:9999;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="page">
+
+<div class="card">
+<img src="partiii.png" class="invite-image">
+</div>
+
+<div class="footer">
+<button id="yesBtn">Top, vidimo se, dolazim</button>
+<button id="noBtn">E, sorry, nemrem</button>
+</div>
+
+</div>
+
+<script>
+
+const yesBtn = document.getElementById('yesBtn');
+const noBtn  = document.getElementById('noBtn');
+
+const messages = [
+"e, sorry, nemrem",
+"znaš da želiš doći",
+"ne, fakat razmisli",
+"ekipa računa na tebe",
+"nema šanse 😈",
+"ajdeeee"
+];
+
+let index = 0;
+let speed = 260;
+let crazy = false;
+let cooldown = false;
+
+function clamp(n,min,max){
+  return Math.max(min,Math.min(max,n));
+}
+
+function randomPos(btn){
+
+  const w = btn.offsetWidth;
+  const h = btn.offsetHeight;
+
+  const margin = 12;
+
+  return {
+    x: Math.random() * (window.innerWidth - w - margin),
+    y: Math.random() * (window.innerHeight - h - margin)
+  };
+
+}
+
+function moveNo(){
+
+  if(cooldown) return;
+  cooldown = true;
+
+  if(!crazy){
+    crazy = true;
+    noBtn.classList.add('crazy-no');
+  }
+
+  index = (index + 1) % messages.length;
+  noBtn.textContent = messages[index];
+
+  const {x,y} = randomPos(noBtn);
+
+  noBtn.style.left = x + 'px';
+  noBtn.style.top  = y + 'px';
+
+  const rot = Math.random()*28 - 14;
+  const scale = 1 + Math.random()*0.2;
+
+  noBtn.style.transform = `rotate(${rot}deg) scale(${scale})`;
+
+  speed = clamp(speed - 18,70,260);
+
+  setTimeout(()=> cooldown = false, speed);
+
+}
+
+noBtn.addEventListener('mouseenter',moveNo);
+noBtn.addEventListener('mouseover',moveNo);
+
+noBtn.addEventListener('touchstart',(e)=>{
+  e.preventDefault();
+  moveNo();
+},{passive:false});
+
+noBtn.addEventListener('click',(e)=>{
+  e.preventDefault();
+  moveNo();
+});
+
+yesBtn.addEventListener('click',()=>{
+  alert("Top! Vidimo se 😄");
+});
+
+</script>
+
+</body>
+</html>
