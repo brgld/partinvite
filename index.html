@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Pozivnica</title>
+<title>parti</title>
 
-<!-- Space Mono -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -20,15 +19,16 @@
 body{
   margin:0;
   min-height:100vh;
-  background: var(--blue);
+  background:var(--blue);
   display:flex;
   justify-content:center;
   padding:20px;
   font-family:"Space Mono", monospace;
+  overflow:hidden;
 }
 
 .page{
-  width:min(820px, 100%);
+  width:min(820px,100%);
   display:flex;
   flex-direction:column;
   gap:16px;
@@ -45,7 +45,6 @@ body{
   display:block;
 }
 
-/* PLAVI DIO ISPOD SLIKE */
 .footer{
   background:var(--blue);
   border-radius:16px;
@@ -56,36 +55,39 @@ body{
   flex-wrap:wrap;
 }
 
-/* GUMBI */
 button{
   padding:14px 22px;
   font-size:16px;
   cursor:pointer;
-
   border:2px solid var(--blue);
   border-radius:12px;
-
   font-weight:bold;
-
   background:var(--beige);
   color:var(--blue);
-
   font-family:"Comic Sans MS","Comic Sans",cursive;
-
-  transition:transform 120ms ease;
   white-space:nowrap;
 }
 
-/* NO gumb kad poludi */
 .crazy-no{
   position:fixed !important;
   z-index:9999;
+}
+
+#confettiCanvas{
+  position:fixed;
+  pointer-events:none;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
 }
 
 </style>
 </head>
 
 <body>
+
+<canvas id="confettiCanvas"></canvas>
 
 <div class="page">
 
@@ -103,15 +105,15 @@ button{
 <script>
 
 const yesBtn = document.getElementById('yesBtn');
-const noBtn  = document.getElementById('noBtn');
+const noBtn = document.getElementById('noBtn');
 
 const messages = [
-"e, sorry, nemrem",
+"e, sori, ne mrem",
 "znaš da želiš doći",
 "ne, fakat razmisli",
 "ekipa računa na tebe",
-"nema šanse 😈",
-"ajdeeee"
+"daj se uzbilji",
+"ajde"
 ];
 
 let index = 0;
@@ -124,17 +126,14 @@ function clamp(n,min,max){
 }
 
 function randomPos(btn){
-
   const w = btn.offsetWidth;
   const h = btn.offsetHeight;
-
   const margin = 12;
 
   return {
-    x: Math.random() * (window.innerWidth - w - margin),
-    y: Math.random() * (window.innerHeight - h - margin)
+    x: Math.random()*(window.innerWidth-w-margin),
+    y: Math.random()*(window.innerHeight-h-margin)
   };
-
 }
 
 function moveNo(){
@@ -162,8 +161,7 @@ function moveNo(){
 
   speed = clamp(speed - 18,70,260);
 
-  setTimeout(()=> cooldown = false, speed);
-
+  setTimeout(()=> cooldown=false, speed);
 }
 
 noBtn.addEventListener('mouseenter',moveNo);
@@ -179,9 +177,62 @@ noBtn.addEventListener('click',(e)=>{
   moveNo();
 });
 
-yesBtn.addEventListener('click',()=>{
-  alert("Top! Vidimo se 😄");
+/* KONFETI */
+
+const canvas = document.getElementById('confettiCanvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+window.addEventListener('resize',()=>{
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 });
+
+let confetti = [];
+
+function createConfetti(){
+
+  confetti = [];
+
+  for(let i=0;i<150;i++){
+    confetti.push({
+      x: Math.random()*canvas.width,
+      y: Math.random()*canvas.height - canvas.height,
+      r: Math.random()*6 + 4,
+      d: Math.random()*150,
+      color: ["#F4E5C7","#0D4FA3","#FFD700","#FF6B6B","#4CAF50"][Math.floor(Math.random()*5)]
+    });
+  }
+
+  animateConfetti();
+}
+
+function animateConfetti(){
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  confetti.forEach((c,i)=>{
+
+    ctx.beginPath();
+    ctx.fillStyle = c.color;
+    ctx.fillRect(c.x,c.y,c.r,c.r);
+
+    c.y += Math.cos(c.d) + 2;
+    c.x += Math.sin(c.d);
+
+    if(c.y > canvas.height){
+      confetti.splice(i,1);
+    }
+  });
+
+  if(confetti.length>0){
+    requestAnimationFrame(animateConfetti);
+  }
+}
+
+yesBtn.addEventListener('click',createConfetti);
 
 </script>
 
